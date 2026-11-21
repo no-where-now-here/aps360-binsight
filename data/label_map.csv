@@ -1,0 +1,68 @@
+source,label,material,bin,note
+trashnet,cardboard,cardboard,blue,
+trashnet,paper,paper,blue,
+trashnet,glass,glass,blue,
+trashnet,metal,metal,blue,
+trashnet,plastic,plastic,blue,
+trashnet,trash,other,garbage,mixed non-recyclables; mapped as a whole class
+kaggle,O,organic,green,kept only after CLIP filtering
+taco,Aluminium foil,metal,blue,verify: clean foil only
+taco,Battery,,drop,hazardous waste - out of scope
+taco,Aluminium blister pack,,drop,ambiguous
+taco,Carded blister pack,,drop,ambiguous
+taco,Other plastic bottle,plastic,blue,
+taco,Clear plastic bottle,plastic,blue,
+taco,Glass bottle,glass,blue,
+taco,Plastic bottle cap,plastic,blue,verify
+taco,Metal bottle cap,metal,blue,verify
+taco,Broken glass,glass,garbage,verify
+taco,Food Can,metal,blue,
+taco,Aerosol,,drop,may be hazardous if not empty
+taco,Drink can,metal,blue,
+taco,Toilet tube,cardboard,blue,
+taco,Other carton,cardboard,blue,
+taco,Egg carton,cardboard,blue,
+taco,Drink carton,paper,blue,
+taco,Corrugated carton,cardboard,blue,
+taco,Meal carton,,drop,often food-soiled
+taco,Pizza box,cardboard,blue,verify
+taco,Paper cup,paper,blue,verify
+taco,Disposable plastic cup,plastic,blue,
+taco,Foam cup,plastic,blue,verify
+taco,Glass cup,glass,garbage,verify: drinking glass is not a container
+taco,Other plastic cup,plastic,blue,
+taco,Food waste,organic,green,
+taco,Glass jar,glass,blue,
+taco,Plastic lid,plastic,blue,
+taco,Metal lid,metal,blue,
+taco,Other plastic,,drop,ambiguous
+taco,Magazine paper,paper,blue,
+taco,Tissues,paper,green,
+taco,Wrapping paper,paper,blue,verify: non-metallic only
+taco,Normal paper,paper,blue,
+taco,Paper bag,paper,blue,
+taco,Plastified paper bag,,drop,ambiguous
+taco,Plastic film,plastic,blue,verify
+taco,Six pack rings,,drop,ambiguous
+taco,Garbage bag,,drop,contents unknown
+taco,Other plastic wrapper,plastic,garbage,verify
+taco,Single-use carrier bag,plastic,blue,verify
+taco,Polypropylene bag,,drop,ambiguous
+taco,Crisp packet,plastic,garbage,verify
+taco,Spread tub,plastic,blue,
+taco,Tupperware,,drop,not packaging
+taco,Disposable food container,plastic,blue,
+taco,Foam food container,plastic,blue,verify
+taco,Other plastic container,plastic,blue,
+taco,Plastic glooves,plastic,garbage,
+taco,Plastic utensils,plastic,garbage,verify
+taco,Pop tab,metal,blue,
+taco,Rope & strings,other,garbage,
+taco,Scrap metal,,drop,special collection
+taco,Shoe,,drop,donation / garbage ambiguous
+taco,Squeezable tube,plastic,garbage,verify
+taco,Plastic straw,plastic,garbage,
+taco,Paper straw,,drop,ambiguous
+taco,Styrofoam piece,,drop,ambiguous
+taco,Unlabeled litter,,drop,no label
+taco,Cigarette,other,garbage,

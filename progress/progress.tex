@@ -1,0 +1,161 @@
+\documentclass[final]{article}
+
+
+\usepackage{aps360}
+\makeatletter\providecommand{\@trackname}{}\makeatother
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\title{BinSight Progress Report: Hierarchical CNN for Toronto Waste Sorting}
+
+\author{%
+  Haoyue Feng \\
+  1013983076, haoyue.feng@mail.utoronto.ca\\
+  GitHub: \texttt{TBC --- push local project and paste public URL here}\\
+}
+
+\begin{document}
+\maketitle
+\vspace{-0.45in}
+
+\section*{Brief Project Description}
+Toronto Blue Bin material is still about 30\% contamination by weight~\cite{toronto2023}. Waste Wizard~\cite{wastewizard} only answers text queries. \textbf{BinSight} takes \emph{one photo} of a household item and predicts (i) Blue / Green / Garbage and (ii) material (cardboard, paper, plastic, metal, glass, organic, other).
+
+Deep learning is appropriate because crushed, dirty, labelled objects under varied lighting are hard for hand-crafted features. Crucially, the bin is \emph{not} a function of material alone (a used tissue is paper but goes in the Green Bin). Following proposal feedback, the \textbf{primary model is my own from-scratch hierarchical CNN} that encodes a material$\to$bin rule prior plus a learned residual correction for such exceptions. A fine-tuned ResNet-18~\cite{he2016} is only a \emph{strong transfer baseline}, and HOG+HSV+SVM~\cite{dalal2005} is the classical baseline.
+
+\begin{figure}[!h]
+\centering
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[font=\scriptsize, node distance=3mm and 4mm,
+  box/.style={draw, rounded corners=2pt, align=center, inner sep=2.5pt},
+  arr/.style={-{Stealth[length=1.6mm]}, thick}]
+  \node[box, fill=blue!8] (in) {Photo $224\times224$};
+  \node[box, fill=green!12, right=of in] (cnn) {My CNN\\4 conv blocks\\$\to$ 256-d};
+  \node[box, fill=yellow!25, above right=2mm and 6mm of cnn] (mat) {Material head\\7 logits};
+  \node[box, fill=orange!15, right=of mat] (rule) {Rule matrix\\$7\times3$ (learnable)};
+  \node[box, fill=yellow!25, below right=2mm and 6mm of cnn] (corr) {Correction head\\256$\to$128$\to$3};
+  \node[box, fill=gray!12, right=18mm of cnn] (bin) {Bin logits\\$=\log(\mathrm{prior})+\mathrm{corr}$};
+  \node[box, fill=gray!15, right=of bin] (out) {Blue / Green / Garbage};
+  \draw[arr] (in)--(cnn); \draw[arr] (cnn)--(mat); \draw[arr] (mat)--(rule);
+  \draw[arr] (cnn)--(corr); \draw[arr] (rule)|-(bin); \draw[arr] (corr)|-(bin); \draw[arr] (bin)--(out);
+\end{tikzpicture}}
+\caption{Primary model: from-scratch CNN with hierarchical bin head (rule prior + correction).}
+\label{fig:arch}
+\end{figure}
+
+\section*{Data Processing}
+\textbf{Sources.} TrashNet~\cite{thung2016} (2,527 studio photos), TACO~\cite{proenca2020} object crops from COCO boxes, and the organic class of Kaggle Waste Classification~\cite{sekar2018}.
+
+\textbf{Steps (reproducible).} (1) Crop TACO boxes with 10\% margin; drop short side $<64$\,px and \texttt{Unlabeled litter}. (2) Map every source label to (material, bin) with \texttt{data/label\_map.csv} using Waste Wizard (ambiguous / hazardous labels dropped). (3) Sample 1,500 Kaggle organic images; CLIP zero-shot filter removes drawings, posters, flowers/yard scenes (Green Bin is not yard waste). (4) pHash de-duplication (Hamming $\le4$) \emph{before} splitting. (5) Grouped stratified 70/15/15 split: all crops from one TACO photo stay together. (6) Pad to square, resize to $224\times224$, ImageNet normalisation; train-time augmentations as in the proposal.
+
+\begin{table}[!h]
+\centering
+\caption{Cleaned dataset after remapping and de-duplication (4419 images).}
+\label{tab:data}
+\scriptsize
+\begin{tabular}{lrrrr}
+\toprule
+Split & Blue & Green & Garbage & Total \\
+\midrule
+Train & 2108 & 762 & 227 & 3097 \\
+Val   & 451  & 164 & 47  & 662 \\
+Test  & 451  & 165 & 44  & 660 \\
+\midrule
+All   & 3010 & 1091 & 318 & 4419 \\
+\bottomrule
+\end{tabular}
+\hspace{0.4em}
+\begin{tabular}{lrrr}
+\toprule
+Source & Blue & Green & Garbage \\
+\midrule
+TrashNet & 2362 & 0 & 137 \\
+TACO & 648 & 13 & 181 \\
+Kaggle & 0 & 1078 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.48\linewidth]{../results/data_examples.png}
+\includegraphics[width=0.48\linewidth]{../results/data_source_bins.png}
+\caption{Left: cleaned examples. Right: \textbf{source confound}---almost all Green labels come from Kaggle web images, so a model could learn image style instead of bin; per-source accuracy is used to monitor this.}
+\label{fig:data}
+\end{figure}
+
+\textbf{Challenge.} Only 440/1500 TACO Flickr originals downloaded (dead links), so fewer in-the-wild crops than planned.
+
+\section*{Baseline Model}
+\textbf{Classical baseline:} resize to $128\times128$; HOG (9 orientations, $16\times16$ cells, $2\times2$ blocks) + HSV $8\times8\times8$ histogram; StandardScaler $\to$ PCA(256) $\to$ RBF-SVM with class-balanced weights; $C,\gamma$ chosen on validation~\cite{dalal2005}. \textbf{Strong DL baseline (not primary):} ImageNet ResNet-18 with two heads~\cite{he2016}.
+
+\begin{table}[!h]
+\centering
+\caption{Baseline results on the cleaned test split.}
+\label{tab:base}
+\scriptsize
+\begin{tabular}{lrrr}
+\toprule
+Model & Capacity & Test bin acc. & Test macro-F1 \\
+\midrule
+HOG+HSV+SVM ($C{=}1,\gamma{=}10^{-3}$) & 2276-d$\to$PCA-256 & 0.859 & 0.687 \\
+ResNet-18 (freeze then fine-tune) & see Table~\ref{tab:primary} & see Table~\ref{tab:primary} & see Table~\ref{tab:primary} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Per-source SVM accuracy: TrashNet 0.957, Kaggle 0.864, TACO 0.556. Garbage recall is only 0.25---useful baseline, not enough alone.
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.58\linewidth]{../results/svm_qualitative.png}
+\includegraphics[width=0.30\linewidth]{../results/svm_confusion.png}
+\caption{SVM qualitative predictions (P=pred, T=true) and confusion matrix.}
+\label{fig:svm}
+\end{figure}
+
+\section*{Primary Model}
+\textbf{Architecture (mine).} Four conv blocks ($3{\to}32{\to}64{\to}128{\to}256$, each Conv--BN--ReLU$\times2$ + MaxPool), GAP to 256-d, dropout 0.3. Material head Linear($256,7$). Learnable rule matrix $R\in\mathbb{R}^{7\times3}$ yields prior $p_{\text{prior}}=p_{\text{mat}}R$. Correction head $256{\to}128{\to}3$. Bin logits $=\log(p_{\text{prior}})+\mathrm{correction}$. This puts the municipal-rule insight \emph{inside} the network. Trained from scratch on CPU (Adam, weighted CE, $\lambda{=}0.5$). Training was limited to a few epochs because a full GPU run was not available locally; the best checkpoint is epoch 5 (\textbf{1.21M parameters}, $\sim$9$\times$ smaller than ResNet-18).
+
+\begin{table}[!h]
+\centering
+\caption{Primary hierarchical CNN vs baselines on the cleaned test split.}
+\label{tab:primary}
+\scriptsize
+\begin{tabular}{lrrrr}
+\toprule
+Model & \#params & Test bin acc. & Macro-F1 & Mat.\ acc. \\
+\midrule
+Hierarchical CNN (primary) & 1.21M & 0.682 & 0.557 & 0.462 \\
+ResNet-18 (strong baseline) & 11.3M & 0.905 & 0.811 & 0.835 \\
+HOG+HSV+SVM & --- & 0.859 & 0.687 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.48\linewidth]{../results/hierarchical_qualitative.png}
+\includegraphics[width=0.48\linewidth]{../results/model_comparison.png}
+\caption{Left: hierarchical CNN qualitative predictions (P=pred, T=true). Right: test bin accuracy and macro-F1 for the primary model vs both baselines.}
+\label{fig:primary}
+\end{figure}
+
+\textbf{Quantitative / qualitative takeaways.} ResNet-18 is currently strongest (test acc.\ 0.905, macro-F1 0.811), as expected for a pretrained backbone. My hierarchical CNN (1.21M params) reaches 0.682 / 0.557 after five CPU epochs---above chance and already discriminating Green (Kaggle-source 0.92), but still weak on TACO wild crops (0.32) and behind both baselines. The short schedule is due to CPU-only training (each epoch took several minutes and longer runs stalled under system sleep), not a design failure: the architecture trains, the data pipeline is finished, and per-source gaps match the confound warned about in the proposal.
+
+\textbf{Feasibility.} Cleaned multi-source data, a working SVM baseline, a strong ResNet baseline, and a designed primary CNN with quantitative + qualitative results are all in place. Completing the project on schedule is realistic.
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}

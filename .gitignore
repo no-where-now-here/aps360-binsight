@@ -1,0 +1,36 @@
+# large / regenerable data
+data/raw/
+data/processed/images/
+data/processed/_orig/
+data/processed/review/
+
+# model checkpoints
+results/*.pt
+*.pt
+
+# python / caches
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# latex build junk
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.synctex.gz
+proposal/pages.txt
+progress/_check.txt
+progress/pages_preview.txt
+progress/pages.txt
+
+# local logs
+results_*_log.txt
+*_log.txt
+
+# OS
+.DS_Store
+Thumbs.db

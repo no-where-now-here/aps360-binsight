@@ -1,0 +1,11 @@
+torch
+torchvision
+numpy>=2.0
+pandas
+pillow
+scikit-learn
+imagehash
+open_clip_torch
+kagglehub
+requests
+tqdm

@@ -1,0 +1,16 @@
+{
+  "model": "hierarchical",
+  "params": 1208319,
+  "best_epoch": 5,
+  "val_bin_acc": 0.675226586102719,
+  "val_bin_macro_f1": 0.5681009848565266,
+  "val_mat_acc": 0.4773413897280967,
+  "test_bin_acc": 0.6818181818181818,
+  "test_bin_macro_f1": 0.556624092537967,
+  "test_mat_acc": 0.4621212121212121,
+  "test_per_source_bin_acc": {
+    "kaggle": 0.9197530864197531,
+    "taco": 0.3225806451612903,
+    "trashnet": 0.6978609625668449
+  }
+}

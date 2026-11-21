@@ -1,0 +1,16 @@
+{
+  "model": "resnet18",
+  "params": 11310410,
+  "best_epoch": 7,
+  "val_bin_acc": 0.9063444103359095,
+  "val_bin_macro_f1": 0.815210194915482,
+  "val_mat_acc": 0.8187311172845501,
+  "test_bin_acc": 0.9045454545454545,
+  "test_bin_macro_f1": 0.8114971648016759,
+  "test_mat_acc": 0.8348484841260043,
+  "test_per_source_bin_acc": {
+    "kaggle": 0.9567901234567902,
+    "taco": 0.717741935483871,
+    "trashnet": 0.9438502673796791
+  }
+}
